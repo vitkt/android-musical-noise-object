@@ -1,0 +1,155 @@
+package ru.vitkt.motionsynthesizer;
+
+import ru.vitkt.soundgenerators.AnimalInput;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+import android.widget.TextView;
+import android.app.Activity;
+
+public class MainActivity extends Activity {
+    Thread t;
+    
+    boolean isRunning = true;
+   // SeekBar fSlider;
+    double sliderval;
+AnimalInput input;
+TextView tv;
+Handler uiH;
+Handler.Callback callback;
+final int ampConst = 7000;
+final int frConst = 200;
+int getAmplitude()
+{
+return (int)((input.getSensorAmp()/10.0f)*ampConst);	
+}
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        tv = new TextView(this);
+        setContentView(tv);
+      input =   new AnimalInput(this);
+      
+      callback = new Handler.Callback() {
+		
+		@Override
+		public boolean handleMessage(Message msg) {
+			final Message toUi = msg;
+			// TODO Auto-generated method stub
+			MainActivity.this.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					Bundle b = toUi.getData();
+					// TODO Auto-generated method stub
+					tv.setText("sensor = "+b.getFloat("sensorAmp")+ " amp = "+b.getInt("amp")+ " x ="+b.getFloat("oriX")+ " y ="+b.getFloat("oriY")+ " z ="+b.getFloat("oriZ"));	
+				}
+			});
+			
+			return true;
+		}
+	};
+	
+	uiH= new Handler(callback);
+
+	
+        t = new Thread() {
+         
+
+		public void run() {
+         // set process priority
+         setPriority(Thread.MAX_PRIORITY);
+         // set the buffer size
+        int buffsize = AudioTrack.getMinBufferSize(sr,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        
+        
+        buffsize=590;
+        Log.e("mus buffsize", "buffsize = "+buffsize);
+        // create an audiotrack object
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                                          sr, AudioFormat.CHANNEL_OUT_MONO,
+                                  AudioFormat.ENCODING_PCM_16BIT, buffsize,
+                                  AudioTrack.MODE_STREAM);
+
+        short samples[] = new short[buffsize];
+        
+        
+        double twopi = 8.*Math.atan(1.);
+        double fr = 440.f;
+        double ph = 0.0;
+
+        // start audio
+       audioTrack.play();
+       sliderval = 1.0d;
+
+       // synthesis loop
+       while(isRunning){
+    	   
+    	   
+    	int amp = getAmplitude();
+    //   int amp = ampConst;
+    		
+    	   
+    	   float y = input.getOriY();
+    	   y =(180.0f- Math.abs(y))/180.0f;
+    			 //  int amp = (int)(y*ampConst);
+           Bundle b = new Bundle();
+           Message m = new Message();
+    	   b.putFloat("sensorAmp", input.getSensorAmp());
+    	   b.putInt("amp", amp);
+    	   b.putFloat("oriX", input.getOriX());
+    	   b.putFloat("oriY", input.getOriY());
+    	   b.putFloat("oriZ", input.getOriZ());
+    	   
+    	   m.setData(b);
+    	   
+    	uiH.sendMessage(m);
+    	Log.i("music", "Amp sensor = "+input.getSensorAmp());
+    	
+    	fr = 300;
+        //fr =  frConst + frConst*Math.abs(y);
+        Log.i("music", "Fr = "+fr);
+        for(int i=0; i < buffsize; i++){
+      
+          samples[i] = (short) (amp *Math.sin(ph));
+          ph += twopi*fr/sr;
+        }
+       audioTrack.write(samples, 0, buffsize);
+      }
+      audioTrack.stop();
+      audioTrack.release();
+    }
+   };
+   t.start();        
+}
+
+@Override
+protected void onPause() {
+
+	super.onPause();
+	input.onPause();
+}
+
+@Override
+protected void onResume() {
+	// TODO Auto-generated method stub
+	super.onResume();
+	input.onResume();
+}
+
+    public void onDestroy(){
+          super.onDestroy();
+          isRunning = false;
+          try {
+            t.join();
+           } catch (InterruptedException e) {
+             e.printStackTrace();
+           }
+           t = null;
+     }
+}
