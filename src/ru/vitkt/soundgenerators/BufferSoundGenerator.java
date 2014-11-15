@@ -37,8 +37,8 @@ public abstract class BufferSoundGenerator implements ISoundGenerator, ISoundPro
 
 				setPriority(Thread.MAX_PRIORITY);
 				_track = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
-						AudioFormat.CHANNEL_OUT_MONO,
-						AudioFormat.ENCODING_PCM_16BIT, _bufferSize,
+						AudioFormat.CHANNEL_OUT_STEREO,
+						AudioFormat.ENCODING_PCM_16BIT, _bufferSize*2,
 						AudioTrack.MODE_STREAM);
 
 				samples = new short[_bufferSize];

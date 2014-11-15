@@ -1,10 +1,10 @@
 package ru.vitkt.soundgenerators;
 
 public class SinwaveGenerator extends BufferSoundGenerator {
-	 double twopi = 8.*Math.atan(1.);
-     double fr = 440.f;
-     double ph = 0.0;
-     double amp = 7000;
+	 protected double twopi = 8.*Math.atan(1.);
+	 protected double fr = 440.f;
+	 protected double ph = 0.0;
+	 protected double amp = 7000;
 	public SinwaveGenerator() {
 		super();
 		
