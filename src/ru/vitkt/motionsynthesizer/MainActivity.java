@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -56,7 +57,7 @@ public class MainActivity extends Activity {
 						//generator = new SinAmpMotionGenerator(this);
 						//generator.setBufferSize(100);
 		
-		
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	
 		cm = new CameraManager();
 		
@@ -107,7 +108,11 @@ public class MainActivity extends Activity {
 		
 		
 	}
-
+	
+	@Override
+	public void onBackPressed() {
+		
+	}
 	@Override
 	protected void onPause() {
 		generator.stop();
